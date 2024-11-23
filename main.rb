@@ -29,6 +29,7 @@ $updates = [
 ]
 $chats = {}
 $messages = []
+$update_call_count = 0 # Counter to track /getUpdates calls
 
 # Endpoint to set a webhook (mocked)
 post %r{/bot(.+)/setWebhook} do
@@ -48,7 +49,43 @@ end
 post %r{/bot(.+)/getUpdates} do
   content_type :json
   status 200
-  { ok: true, result: $updates }.to_json
+
+  # Increment the call count
+  $update_call_count += 1
+
+  case $update_call_count
+  when 1
+    { ok: true, result: $updates }.to_json
+  when 2
+    {
+      ok: true,
+      result: [
+        {
+          update_id: 2,
+          message: {
+            message_id: 2,
+            from: {
+              id: 123456789,
+              is_bot: false,
+              first_name: "TestUser",
+              username: "test_user",
+              language_code: "en"
+            },
+            chat: {
+              id: 123456789,
+              first_name: "TestUser",
+              username: "test_user",
+              type: "private"
+            },
+            date: Time.now.to_i,
+            text: "/start2"
+          }
+        }
+      ]
+    }.to_json
+  else
+    { ok: true, result: [] }.to_json
+  end
 end
 
 # Endpoint to send a message (mocked)
@@ -92,6 +129,7 @@ post '/reset' do
   $updates.clear
   $messages.clear
   $chats.clear
+  $update_call_count = 0 # Reset call count
 
   # Add the /start message back to updates
   $updates << {
