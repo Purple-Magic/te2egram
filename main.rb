@@ -9,6 +9,7 @@ require 'json'
 CONFIG = YAML.safe_load(ERB.new(File.read('steps.yml')).result, permitted_classes: [Time])
 
 $update_call_count = 0 # Counter to track /getUpdates calls
+$messages = [] # Store sent messages for mocking
 
 # Endpoint to set a webhook (mocked)
 post %r{/bot(.+)/setWebhook} do
@@ -39,25 +40,41 @@ post %r{/bot(.+)/getUpdates} do
   { ok: true, result: updates }.to_json
 end
 
+# Endpoint to send a message (mocked)
+post %r{/bot(.+)/sendMessage} do
+  content_type :json
+  request_payload = JSON.parse(request.body.read)
+
+  chat_id = request_payload['chat_id']
+  text = request_payload['text']
+
+  # Create a mock message object
+  message = {
+    message_id: $messages.size + 1,
+    chat: {
+      id: chat_id,
+      type: "private"
+    },
+    date: Time.now.to_i,
+    text: text
+  }
+
+  # Save the message to the in-memory storage
+  $messages << message
+
+  # Respond with the mocked message object
+  { ok: true, result: message }.to_json
+end
+
 # Endpoint to reset server state
 post '/reset' do
   content_type :json
   $update_call_count = 0 # Reset call count
+  $messages.clear # Clear stored messages
   { ok: true, message: 'Server reset' }.to_json
 end
 
-# Handle unsupported endpoints gracefully
-not_found do
-  content_type :json
-  status 404
-  {
-    ok: false,
-    error_code: 404,
-    description: "Not Found"
-  }.to_json
-end
-
-# Explicitly start the Sinatra application
+# Endpoint to get bot information (getMe)
 post %r{/bot(.+)/getMe} do
   content_type :json
   status 200
@@ -75,5 +92,16 @@ post %r{/bot(.+)/getMe} do
   }.to_json
 end
 
-Sinatra::Application.run! if __FILE__ == $PROGRAM_NAME
+# Handle unsupported endpoints gracefully
+not_found do
+  content_type :json
+  status 404
+  {
+    ok: false,
+    error_code: 404,
+    description: "Not Found"
+  }.to_json
+end
 
+# Explicitly start the Sinatra application
+Sinatra::Application.run! if __FILE__ == $PROGRAM_NAME
