@@ -4,24 +4,55 @@ require 'sinatra'
 require 'json'
 
 # Data storage for the emulated Telegram API
-$updates = []
+$updates = [
+  {
+    update_id: 1,
+    message: {
+      message_id: 1,
+      from: {
+        id: 123456789,
+        is_bot: false,
+        first_name: "TestUser",
+        username: "test_user",
+        language_code: "en"
+      },
+      chat: {
+        id: 123456789,
+        first_name: "TestUser",
+        username: "test_user",
+        type: "private"
+      },
+      date: Time.now.to_i,
+      text: "/start"
+    }
+  }
+]
 $chats = {}
 $messages = []
 
 # Endpoint to set a webhook (mocked)
-post '/bot:token/setWebhook' do
+post %r{/bot(.+)/setWebhook} do
   content_type :json
+  status 200
+  { ok: true, result: true }.to_json
+end
+
+# Endpoint to delete a webhook (mocked)
+post %r{/bot(.+)/deleteWebhook} do
+  content_type :json
+  status 200
   { ok: true, result: true }.to_json
 end
 
 # Endpoint to get updates (mocked)
-get '/bot:token/getUpdates' do
+post %r{/bot(.+)/getUpdates} do
   content_type :json
+  status 200
   { ok: true, result: $updates }.to_json
 end
 
 # Endpoint to send a message (mocked)
-post '/bot:token/sendMessage' do
+post %r{/bot(.+)/sendMessage} do
   content_type :json
   request_payload = JSON.parse(request.body.read)
 
@@ -55,18 +86,72 @@ post '/receiveUpdate' do
   { ok: true, update_id: update_id }.to_json
 end
 
-# Utility endpoints for testing
+# Endpoint to reset server state
 post '/reset' do
   content_type :json
   $updates.clear
   $messages.clear
   $chats.clear
-  { ok: true, message: 'Server reset' }.to_json
+
+  # Add the /start message back to updates
+  $updates << {
+    update_id: 1,
+    message: {
+      message_id: 1,
+      from: {
+        id: 123456789,
+        is_bot: false,
+        first_name: "TestUser",
+        username: "test_user",
+        language_code: "en"
+      },
+      chat: {
+        id: 123456789,
+        first_name: "TestUser",
+        username: "test_user",
+        type: "private"
+      },
+      date: Time.now.to_i,
+      text: "/start"
+    }
+  }
+
+  { ok: true, message: 'Server reset and /start message added' }.to_json
 end
 
+# Endpoint to fetch all messages
 get '/messages' do
   content_type :json
   { ok: true, result: $messages }.to_json
+end
+
+# Endpoint to handle "getMe"
+post %r{/bot(.+)/getMe} do
+  content_type :json
+  status 200
+  {
+    ok: true,
+    result: {
+      id: 123456789,
+      is_bot: true,
+      first_name: "TestBot",
+      username: "Test_Bot",
+      can_join_groups: true,
+      can_read_all_group_messages: true,
+      supports_inline_queries: true
+    }
+  }.to_json
+end
+
+# Handle unsupported endpoints gracefully
+not_found do
+  content_type :json
+  status 404
+  {
+    ok: false,
+    error_code: 404,
+    description: "Not Found"
+  }.to_json
 end
 
 # Explicitly start the Sinatra application
