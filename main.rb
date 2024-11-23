@@ -4,6 +4,7 @@ require 'sinatra'
 require 'yaml'
 require 'erb'
 require 'json'
+require_relative './define_steps'
 
 # Load steps configuration from YAML file
 CONFIG = YAML.safe_load(ERB.new(File.read('steps.yml')).result, permitted_classes: [Time])
