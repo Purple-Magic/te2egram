@@ -4,55 +4,91 @@ require 'sinatra'
 require 'yaml'
 require 'erb'
 require 'json'
+require 'logger'
 require_relative './define_steps'
 
-# Load steps configuration from YAML file
-CONFIG = YAML.safe_load(ERB.new(File.read('steps.yml')).result, permitted_classes: [Time])
+# Initialize logger
+logger = Logger.new($stdout)
+logger.level = Logger::DEBUG
 
-$update_call_count = 0 # Counter to track /getUpdates calls
-$messages = [] # Store sent messages for mocking
+# Sinatra configuration
+configure do
+  set :protection, except: [:host]
+  set :logger, logger
+  set :bind, 'te2egram'
+  set :environment, :test
 
-# Endpoint to set a webhook (mocked)
+  logger.info "Middleware stack: #{Sinatra::Base.middleware.inspect}"
+end
+
+# Load steps configuration
+begin
+  CONFIG = YAML.safe_load(ERB.new(File.read('steps.yml')).result, permitted_classes: [Time])
+  settings.logger.info('Configuration loaded from steps.yml')
+rescue StandardError => e
+  settings.logger.error("Failed to load configuration: #{e.message}")
+  exit 1
+end
+
+# Global variables
+$update_call_count = 0
+$messages = []
+
+# Log requests
+before do
+  settings.logger.info("Request received: #{request.request_method} #{request.path}")
+  settings.logger.info("Host header: #{request.env['HTTP_HOST']}")
+end
+
+# Routes
+get '/' do
+  settings.logger.info('Health check endpoint accessed')
+  content_type :json
+  { ok: true, message: 'Healthy!' }.to_json
+end
+
 post %r{/bot(.+)/setWebhook} do
+  settings.logger.info('setWebhook endpoint called')
   content_type :json
-  status 200
   { ok: true, result: true }.to_json
 end
 
-# Endpoint to delete a webhook (mocked)
 post %r{/bot(.+)/deleteWebhook} do
+  settings.logger.info('deleteWebhook endpoint called')
   content_type :json
-  status 200
   { ok: true, result: true }.to_json
 end
 
-# Endpoint to get updates (mocked)
-# post %r{/bot(.+)/getUpdates} do
 post '/bot1/getUpdates' do
+  settings.logger.info('getUpdates endpoint called')
   content_type :json
-  status 200
 
-  # Increment the call count
   $update_call_count += 1
+  settings.logger.info("Step count: #{$update_call_count}")
 
-  puts "Step: #{$update_call_count}"
-
-  # Fetch updates based on the step configuration
   step = CONFIG['steps'].find { |s| s['id'] == $update_call_count }
   updates = step ? step['updates'] : []
+
+  if updates.empty?
+    settings.logger.warn('No updates found for this step')
+
+    status 204
+  else
+    settings.logger.debug("Updates for step: #{updates}")
+  end
 
   { ok: true, result: updates }.to_json
 end
 
-# Endpoint to send a message (mocked)
 post %r{/bot(.+)/sendMessage} do
+  settings.logger.info('sendMessage endpoint called')
   content_type :json
-  request_payload = JSON.parse(request.body.read)
 
-  chat_id = request_payload['chat_id']
-  text = request_payload['text']
+  payload = JSON.parse(request.body.read)
+  chat_id = payload['chat_id']
+  text = payload['text']
+  settings.logger.info("Message received - Chat ID: #{chat_id}, Text: #{text}")
 
-  # Create a mock message object
   message = {
     message_id: $messages.size + 1,
     chat: {
@@ -63,25 +99,27 @@ post %r{/bot(.+)/sendMessage} do
     text: text
   }
 
-  # Save the message to the in-memory storage
   $messages << message
+  settings.logger.info("Message stored: #{message}")
 
-  # Respond with the mocked message object
   { ok: true, result: message }.to_json
 end
 
-# Endpoint to reset server state
 post '/reset' do
+  settings.logger.info('Reset endpoint called')
   content_type :json
-  $update_call_count = 0 # Reset call count
-  $messages.clear # Clear stored messages
+
+  $update_call_count = 0
+  $messages.clear
+  settings.logger.info('Server state reset')
+
   { ok: true, message: 'Server reset' }.to_json
 end
 
-# Endpoint to get bot information (getMe)
 post %r{/bot(.+)/getMe} do
+  settings.logger.info('getMe endpoint called')
   content_type :json
-  status 200
+
   {
     ok: true,
     result: {
@@ -98,17 +136,10 @@ end
 
 # Handle unsupported endpoints gracefully
 not_found do
+  settings.logger.warn("Unsupported endpoint accessed: #{request.path}")
   content_type :json
-  status 404
-  {
-    ok: false,
-    error_code: 404,
-    description: "Not Found"
-  }.to_json
+  { ok: false, error_code: 404, description: 'Not Found' }.to_json
 end
 
-set :protection, except: :host
-set :bind, '0.0.0.0'
-
-# Explicitly start the Sinatra application
+# Start Sinatra application
 Sinatra::Application.run! if __FILE__ == $PROGRAM_NAME
