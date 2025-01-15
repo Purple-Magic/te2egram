@@ -27,12 +27,15 @@ post %r{/bot(.+)/deleteWebhook} do
 end
 
 # Endpoint to get updates (mocked)
-post %r{/bot(.+)/getUpdates} do
+# post %r{/bot(.+)/getUpdates} do
+post '/bot1/getUpdates' do
   content_type :json
   status 200
 
   # Increment the call count
   $update_call_count += 1
+
+  puts "Step: #{$update_call_count}"
 
   # Fetch updates based on the step configuration
   step = CONFIG['steps'].find { |s| s['id'] == $update_call_count }
@@ -103,6 +106,9 @@ not_found do
     description: "Not Found"
   }.to_json
 end
+
+set :protection, except: :host
+set :bind, '0.0.0.0'
 
 # Explicitly start the Sinatra application
 Sinatra::Application.run! if __FILE__ == $PROGRAM_NAME

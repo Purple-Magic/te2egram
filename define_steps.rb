@@ -50,7 +50,6 @@ class StepBuilder
   def to_yaml
     { 'steps' => @steps.map(&:deep_stringify_keys) }.to_yaml
   end
-
 end
 
 # DSL Interface to Define Steps
@@ -75,6 +74,38 @@ steps = define_steps do
 
   step(id: 3) do
     # No updates for this step
+  end
+
+  step(id: 4) do
+    update(update_id: 4, text: '/invited')
+  end
+
+  step(id: 5) do
+    update(update_id: 5, text: '/reminder')
+  end
+
+  step(id: 6) do
+    update(update_id: 6, text: '/share')
+  end
+
+  step(id: 7) do
+    update(update_id: 7, text: '/about')
+  end
+
+  step(id: 8) do
+    update(update_id: 8, text: '/support')
+  end
+
+  step(id: 9) do
+    update(update_id: 9, text: 'UnhandledCommand')
+  end
+
+  step(id: 10) do
+    update(update_id: 10, text: '/timezone_other')
+  end
+
+  step(id: 11) do
+    update(update_id: 11, text: '/timezone_utc+3')
   end
 end
 

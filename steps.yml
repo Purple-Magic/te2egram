@@ -16,7 +16,7 @@ steps:
         first_name: TestUser
         username: test_user
         type: private
-      date: 1736452211
+      date: 1736974965
       text: "/start"
 - id: 2
   updates:
@@ -34,7 +34,151 @@ steps:
         first_name: TestUser
         username: test_user
         type: private
-      date: 1736452211
+      date: 1736974965
       text: "/start2"
 - id: 3
   updates: []
+- id: 4
+  updates:
+  - update_id: 4
+    message:
+      message_id: 4
+      from:
+        id: 123456789
+        is_bot: false
+        first_name: TestUser
+        username: test_user
+        language_code: en
+      chat:
+        id: 123456789
+        first_name: TestUser
+        username: test_user
+        type: private
+      date: 1736974965
+      text: "/invited"
+- id: 5
+  updates:
+  - update_id: 5
+    message:
+      message_id: 5
+      from:
+        id: 123456789
+        is_bot: false
+        first_name: TestUser
+        username: test_user
+        language_code: en
+      chat:
+        id: 123456789
+        first_name: TestUser
+        username: test_user
+        type: private
+      date: 1736974965
+      text: "/reminder"
+- id: 6
+  updates:
+  - update_id: 6
+    message:
+      message_id: 6
+      from:
+        id: 123456789
+        is_bot: false
+        first_name: TestUser
+        username: test_user
+        language_code: en
+      chat:
+        id: 123456789
+        first_name: TestUser
+        username: test_user
+        type: private
+      date: 1736974965
+      text: "/share"
+- id: 7
+  updates:
+  - update_id: 7
+    message:
+      message_id: 7
+      from:
+        id: 123456789
+        is_bot: false
+        first_name: TestUser
+        username: test_user
+        language_code: en
+      chat:
+        id: 123456789
+        first_name: TestUser
+        username: test_user
+        type: private
+      date: 1736974965
+      text: "/about"
+- id: 8
+  updates:
+  - update_id: 8
+    message:
+      message_id: 8
+      from:
+        id: 123456789
+        is_bot: false
+        first_name: TestUser
+        username: test_user
+        language_code: en
+      chat:
+        id: 123456789
+        first_name: TestUser
+        username: test_user
+        type: private
+      date: 1736974965
+      text: "/support"
+- id: 9
+  updates:
+  - update_id: 9
+    message:
+      message_id: 9
+      from:
+        id: 123456789
+        is_bot: false
+        first_name: TestUser
+        username: test_user
+        language_code: en
+      chat:
+        id: 123456789
+        first_name: TestUser
+        username: test_user
+        type: private
+      date: 1736974965
+      text: UnhandledCommand
+- id: 10
+  updates:
+  - update_id: 10
+    message:
+      message_id: 10
+      from:
+        id: 123456789
+        is_bot: false
+        first_name: TestUser
+        username: test_user
+        language_code: en
+      chat:
+        id: 123456789
+        first_name: TestUser
+        username: test_user
+        type: private
+      date: 1736974965
+      text: "/timezone_other"
+- id: 11
+  updates:
+  - update_id: 11
+    message:
+      message_id: 11
+      from:
+        id: 123456789
+        is_bot: false
+        first_name: TestUser
+        username: test_user
+        language_code: en
+      chat:
+        id: 123456789
+        first_name: TestUser
+        username: test_user
+        type: private
+      date: 1736974965
+      text: "/timezone_utc+3"
