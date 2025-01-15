@@ -16,7 +16,7 @@ steps:
         first_name: TestUser
         username: test_user
         type: private
-      date: 1732404128
+      date: 1736452211
       text: "/start"
 - id: 2
   updates:
@@ -34,7 +34,7 @@ steps:
         first_name: TestUser
         username: test_user
         type: private
-      date: 1732404128
+      date: 1736452211
       text: "/start2"
 - id: 3
   updates: []
