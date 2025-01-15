@@ -5,10 +5,31 @@ require 'yaml'
 require 'erb'
 require 'json'
 require 'logger'
+require 'colorize'
 require_relative './define_steps'
 
+# Custom logger class with colorize integration
+class ColoredLogger < Logger
+  def format_message(severity, timestamp, progname, msg)
+    color = case severity
+            when 'DEBUG' then :blue
+            when 'INFO' then :green
+            when 'WARN' then :yellow
+            when 'ERROR' then :red
+            when 'FATAL' then :light_red
+            else :default
+            end
+
+    formatted_msg = msg.gsub(/<([^>]+)>/, '\e[31m\\0\e[0m')
+
+    "[#{timestamp.to_s.colorize(:light_cyan)}] " \
+    "#{severity.ljust(5).colorize(color)} " \
+    "#{formatted_msg.strip}\n"
+  end
+end
+
 # Initialize logger
-logger = Logger.new($stdout)
+logger = ColoredLogger.new($stdout)
 logger.level = Logger::DEBUG
 
 # Sinatra configuration
@@ -19,6 +40,7 @@ configure do
   set :environment, :test
 
   logger.info "Middleware stack: #{Sinatra::Base.middleware.inspect}"
+  logger.info "Host header: #{Socket.gethostname.colorize(:yellow)}"
 end
 
 # Load steps configuration
@@ -36,8 +58,10 @@ $messages = []
 
 # Log requests
 before do
-  settings.logger.info("Request received: #{request.request_method} #{request.path}")
-  settings.logger.info("Host header: #{request.env['HTTP_HOST']}")
+  colored_path = request.path.colorize(:magenta)
+  colored_method = request.request_method.colorize(:cyan)
+  settings.logger.info("Request received")
+  settings.logger.info("#{colored_method} #{colored_path}")
 end
 
 # Routes
@@ -72,6 +96,7 @@ post '/bot1/getUpdates' do
   if updates.empty?
     settings.logger.warn('No updates found for this step')
 
+    $update_call_count = 0
     status 204
   else
     settings.logger.debug("Updates for step: #{updates}")
@@ -80,7 +105,7 @@ post '/bot1/getUpdates' do
   { ok: true, result: updates }.to_json
 end
 
-post %r{/bot(.+)/sendMessage} do
+post '/bot1/sendMessage' do
   settings.logger.info('sendMessage endpoint called')
   content_type :json
 
@@ -136,7 +161,8 @@ end
 
 # Handle unsupported endpoints gracefully
 not_found do
-  settings.logger.warn("Unsupported endpoint accessed: #{request.path}")
+  colored_path = request.path.colorize(:magenta)
+  settings.logger.warn("Unsupported endpoint accessed: #{colored_path}")
   content_type :json
   { ok: false, error_code: 404, description: 'Not Found' }.to_json
 end
