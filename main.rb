@@ -6,6 +6,7 @@ require 'erb'
 require 'json'
 require 'logger'
 require 'colorize'
+require 'pry'
 require_relative './define_steps'
 
 # Custom logger class with colorize integration
@@ -60,7 +61,6 @@ $messages = []
 before do
   colored_path = request.path.colorize(:magenta)
   colored_method = request.request_method.colorize(:cyan)
-  settings.logger.info("Request received")
   settings.logger.info("#{colored_method} #{colored_path}")
 end
 
@@ -84,11 +84,10 @@ post %r{/bot(.+)/deleteWebhook} do
 end
 
 post '/bot1/getUpdates' do
-  settings.logger.info('getUpdates endpoint called')
   content_type :json
 
   $update_call_count += 1
-  settings.logger.info("Step count: #{$update_call_count}")
+  settings.logger.info("Step index: #{$update_call_count}")
 
   step = CONFIG['steps'].find { |s| s['id'] == $update_call_count }
   updates = step ? step['updates'] : []
@@ -106,28 +105,34 @@ post '/bot1/getUpdates' do
 end
 
 post '/bot1/sendMessage' do
-  settings.logger.info('sendMessage endpoint called')
   content_type :json
 
-  payload = JSON.parse(request.body.read)
-  chat_id = payload['chat_id']
-  text = payload['text']
-  settings.logger.info("Message received - Chat ID: #{chat_id}, Text: #{text}")
+  body = request.body.read
 
-  message = {
-    message_id: $messages.size + 1,
-    chat: {
-      id: chat_id,
-      type: "private"
-    },
-    date: Time.now.to_i,
-    text: text
-  }
+  if body.empty?
+    settings.logger.error('Empty request body')
+    { ok: true, result: {} }.to_json
+  else
+    payload = JSON.parse(body)
+    chat_id = payload['chat_id']
+    text = payload['text']
+    settings.logger.info("Message received - Chat ID: #{chat_id}, Text: #{text}")
 
-  $messages << message
-  settings.logger.info("Message stored: #{message}")
+    message = {
+      message_id: $messages.size + 1,
+      chat: {
+        id: chat_id,
+        type: "private"
+      },
+      date: Time.now.to_i,
+      text: text
+    }
 
-  { ok: true, result: message }.to_json
+    $messages << message
+    settings.logger.info("Message stored: #{message}")
+
+    { ok: true, result: message }.to_json
+  end
 end
 
 post '/reset' do

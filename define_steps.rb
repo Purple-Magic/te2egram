@@ -68,9 +68,9 @@ steps = define_steps do
     update(update_id: 1, text: '/start')
   end
 
-  # step(id: 2) do
-  #   update(update_id: 2, text: '/start2')
-  # end
+  step(id: 2) do
+    update(update_id: 2, text: '/start2')
+  end
 
   # step(id: 3) do
   #   # No updates for this step
