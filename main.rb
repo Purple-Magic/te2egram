@@ -107,15 +107,13 @@ end
 post '/bot1/sendMessage' do
   content_type :json
 
-  body = request.body.read
+  chat_id = params['chat_id']
+  text = params['text']
 
-  if body.empty?
+  if chat_id.empty?
     settings.logger.error('Empty request body')
     { ok: true, result: {} }.to_json
   else
-    payload = JSON.parse(body)
-    chat_id = payload['chat_id']
-    text = payload['text']
     settings.logger.info("Message received - Chat ID: #{chat_id}, Text: #{text}")
 
     message = {
